@@ -22,3 +22,7 @@
 - Docker: `docker compose build`로 이미지를 만들고 api·ui 컨테이너를 띄워 /health, /ask, /agent(호스트의 factory-pdm 실시간 데이터 사용, mock=false)와 UI(200) 응답까지 확인했다.
 - 응답 Content-Type에 `charset=utf-8`을 명시했다. 명시하지 않으면 Windows PowerShell 5.1의 Invoke-RestMethod가 한글 응답을 Latin-1로 읽어 깨지는 것을 직접 확인해서.
 - README의 호출 예시는 curl 대신 `Invoke-RestMethod`로 썼다. PowerShell 5.1에서 `curl`은 Invoke-WebRequest의 별칭이라 curl 문법이 그대로 동작하지 않아서.
+- 배포(2026-11-06): HF Docker Space가 무료 계정에서 막혀(402) Streamlit Community Cloud로 배포한다. 프로세스를 하나만 띄울 수 있어 FastAPI 없이 RAG·에이전트 함수를 직접 부르는 단독 데모(`deploy/streamlit/streamlit_app.py`)를 만들었다.
+- 하루 요청 수 제한: 공개 데모의 API 키 비용을 막기 위해 서비스 전체 기준 하루 100회(KST 자정 초기화) 한도를 넣었다. API에서는 429로, 데모 앱에서는 안내 문구로 막는다. 사용자별이 아니라 전체 기준인 이유는 목적이 '비용 상한'이기 때문이다. 카운트는 파일에 저장하지만 무료 호스팅이 재시작되면 0부터 다시 센다(최악의 경우 하루 한도의 몇 배까지 쓸 수 있음, 질문당 약 $0.0003이라 감수).
+- 데모에서는 factory-pdm과 API로 연결할 수 없어(Streamlit Cloud는 API 포트를 공개하지 않음) 설비 상태는 목업으로 응답하고 화면에 명시했다.
+- 클라우드 의존성은 CPU 전용 torch 휠을 쓰도록 `--extra-index-url`을 지정했다. 같은 조건의 리눅스 컨테이너에서 한도 2회로 설정해 3번째 질문이 차단되는 것까지 확인했다.

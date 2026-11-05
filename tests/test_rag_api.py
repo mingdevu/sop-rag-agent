@@ -30,3 +30,25 @@ def test_api_endpoints(mock_llm):
     assert client.post("/ask", json={"question": ""}).status_code == 422
     agent_result = client.post("/agent", json={"question": "3번 설비 상태 알려줘"}).json()
     assert agent_result["tool_trace"][0]["tool"] == "get_equipment_status"
+
+
+def test_daily_limiter_blocks_after_limit(tmp_path):
+    from sop_rag.limits import DailyLimiter
+    limiter = DailyLimiter(limit=2, state_path=tmp_path / "usage.json")
+    assert limiter.try_acquire() and limiter.try_acquire()
+    assert limiter.try_acquire() is False
+    assert limiter.usage()["remaining"] == 0
+    # 새 인스턴스(재시작)도 같은 날이면 이어서 센다
+    assert DailyLimiter(limit=2, state_path=tmp_path / "usage.json").try_acquire() is False
+    assert DailyLimiter(limit=0, state_path=tmp_path / "x.json").try_acquire() is True
+
+
+def test_api_returns_429_when_limit_exceeded(mock_llm, tmp_path, monkeypatch):
+    from sop_rag import api
+    from sop_rag.limits import DailyLimiter
+    monkeypatch.setattr(api, "limiter", DailyLimiter(limit=1, state_path=tmp_path / "u.json"))
+    client = TestClient(api.app)
+    assert client.post("/ask", json={"question": "냉각수 농도"}).status_code == 200
+    blocked = client.post("/agent", json={"question": "3번 설비"})
+    assert blocked.status_code == 429 and "한도" in blocked.json()["detail"]
+    assert client.get("/usage").json()["used"] == 1

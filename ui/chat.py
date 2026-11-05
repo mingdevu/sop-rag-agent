@@ -15,6 +15,18 @@ st.caption("문서는 모두 합성(가상) 문서입니다 · 답변의 [문서
 mode = st.sidebar.radio("모드", ["에이전트 (설비 상태 + SOP)", "문서 질의응답 (RAG)"])
 st.sidebar.markdown("예시 질문\n- 3번 설비 이상 점수가 높은데 어떻게 조치해?\n- 에러코드 E302는 뭐야?\n- 냉각수 농도 기준은?")
 
+def show_usage() -> None:
+    """하루 한도가 걸려 있으면 남은 횟수를 사이드바에 보여 준다."""
+    try:
+        usage = httpx.get(f"{API_URL}/usage", timeout=5).json()
+    except (httpx.HTTPError, ValueError):
+        return
+    if usage.get("limit"):
+        st.sidebar.caption(f"오늘 데모 사용량: {usage['used']} / {usage['limit']}회 (KST 자정에 초기화)")
+
+
+show_usage()
+
 if "history" not in st.session_state:
     st.session_state.history = []
 
@@ -41,10 +53,17 @@ if question:
                 details = {key: result.get(key) for key in
                            ("provider", "latency_ms", "citations", "tool_trace", "contexts",
                             "used_mock_equipment_data", "citation_check") if key in result}
+            except httpx.HTTPStatusError as error:
+                # 429(하루 한도 초과) 등 서버가 보낸 안내 문구를 그대로 보여 준다
+                try:
+                    message = error.response.json().get("detail", str(error))
+                except ValueError:
+                    message = str(error)
+                answer, details = f"⚠️ {message}", None
             except httpx.HTTPError as error:
                 answer, details = f"API 호출 실패: {error}", None
         if (details or {}).get("used_mock_equipment_data"):
-            st.warning("설비 상태는 목업 데이터입니다 (factory-pdm 미실행).")
+            st.warning("설비 상태는 목업 데이터입니다 (factory-pdm 서비스에 연결하지 못함).")
         st.markdown(answer)
         if details:
             with st.expander("근거·도구 호출 보기"):
