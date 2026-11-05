@@ -1,0 +1,11 @@
+# 비밀값
+.env
+# 가상환경
+.venv/
+venv/
+# 생성물 (python -m sop_rag.index로 재생성)
+index_store/
+# 기타
+__pycache__/
+.pytest_cache/
+*.pyc
