@@ -19,3 +19,6 @@
 - 에이전트 trace에서 병렬 도구 호출 결과가 다른 호출에 붙는 버그가 있어서 `tool_call_id`로 짝을 맞추도록 고쳤다.
 - factory-pdm 연동 주소는 `localhost` 대신 `127.0.0.1`을 기본값으로 했다. Windows에서 IPv6 우선 시도로 요청마다 약 2초가 늦어지는 것을 factory-pdm에서 확인했기 때문이다.
 - Docker 이미지는 리눅스 기본 torch(CUDA 포함, 수 GB) 대신 CPU 전용 휠을 먼저 설치하도록 했다.
+- Docker: `docker compose build`로 이미지를 만들고 api·ui 컨테이너를 띄워 /health, /ask, /agent(호스트의 factory-pdm 실시간 데이터 사용, mock=false)와 UI(200) 응답까지 확인했다.
+- 응답 Content-Type에 `charset=utf-8`을 명시했다. 명시하지 않으면 Windows PowerShell 5.1의 Invoke-RestMethod가 한글 응답을 Latin-1로 읽어 깨지는 것을 직접 확인해서.
+- README의 호출 예시는 curl 대신 `Invoke-RestMethod`로 썼다. PowerShell 5.1에서 `curl`은 Invoke-WebRequest의 별칭이라 curl 문법이 그대로 동작하지 않아서.

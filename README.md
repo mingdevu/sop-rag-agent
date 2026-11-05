@@ -134,15 +134,15 @@ pytest -q                     # 테스트 13개 (LLM을 호출하지 않음)
 uvicorn sop_rag.api:app --host 127.0.0.1 --port 8100
 streamlit run ui\chat.py      # 다른 터미널에서
 
-# API 직접 호출
-curl -X POST http://127.0.0.1:8100/agent -H "content-type: application/json" `
-  -d '{\"question\": \"3번 설비 이상 점수가 높은데 어떻게 조치해?\"}'
+# API 직접 호출 (한글 본문은 UTF-8 바이트로 보내야 깨지지 않는다)
+$body = [System.Text.Encoding]::UTF8.GetBytes('{"question": "3번 설비 이상 점수가 높은데 어떻게 조치해?"}')
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8100/agent -ContentType "application/json; charset=utf-8" -Body $body
 
 python -m eval.run_eval       # 평가 (Anthropic API 호출 약 90회)
 ```
 
 - 설비 상태를 실시간으로 받으려면 [factory-pdm](https://github.com/mingdevu/factory-pdm)을 먼저 띄웁니다 (`docker compose up`). 꺼져 있으면 목업 응답으로 동작합니다.
-- Docker: `docker compose up --build` (API :8100, UI :8510). API 키는 이미지에 넣지 않고 `.env`로 주입합니다. 빌드 검증 여부는 `DECISIONS.md`를 참고하세요.
+- Docker: `docker compose up --build` (API :8100, UI :8510). API 키는 이미지에 넣지 않고 `.env`로 주입합니다. 로컬 Docker Desktop에서 빌드와 /ask·/agent 응답까지 확인했습니다.
 
 ## 8. 한계와 다음 단계
 

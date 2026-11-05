@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from sop_rag.agent import run_agent
@@ -15,7 +16,14 @@ from sop_rag.llm import get_llm
 from sop_rag.rag import answer_question
 from sop_rag.retriever import get_retriever
 
-app = FastAPI(title="sop-rag-agent", version="0.1.0")
+
+
+class UTF8JSONResponse(JSONResponse):
+    """Content-Type에 charset을 명시한다. 없으면 PowerShell 5.1 등 일부 클라이언트가 한글을 Latin-1로 읽어 깨진다."""
+    media_type = "application/json; charset=utf-8"
+
+
+app = FastAPI(title="sop-rag-agent", version="0.1.0", default_response_class=UTF8JSONResponse)
 
 
 class AskRequest(BaseModel):
