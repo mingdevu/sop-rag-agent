@@ -1,0 +1,7 @@
+{
+ "n": 10,
+ "input_tokens_mean": 1347,
+ "output_tokens_mean": 269,
+ "llm_latency_ms_p50": 1615,
+ "cost_usd_per_question_at_0.10_0.50_per_mtok": 0.000269
+}
