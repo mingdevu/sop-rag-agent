@@ -1,0 +1,17 @@
+services:
+  api:
+    build: .
+    image: sop-rag-agent:local
+    env_file: .env
+    environment:
+      # factory-pdm을 호스트에서 띄운 경우 (Docker Desktop)
+      PDM_INGEST_URL: http://host.docker.internal:8001
+      PDM_SERVE_URL: http://host.docker.internal:8000
+    ports: ["8100:8100"]
+  ui:
+    image: sop-rag-agent:local
+    command: streamlit run ui/chat.py --server.address 0.0.0.0 --server.port 8501
+    environment:
+      SOP_API_URL: http://api:8100
+    ports: ["8510:8501"]
+    depends_on: [api]
